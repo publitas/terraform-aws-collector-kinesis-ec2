@@ -197,7 +197,7 @@ module "instance_type_metrics" {
 
 locals {
   collector_hocon = templatefile("${path.module}/templates/config.hocon.tmpl", {
-    port             = var.ingress_port
+    port             = var.ingress_port_docker
     paths            = var.custom_paths
     cookie_domain    = var.cookie_domain
     good_stream_name = var.good_stream_name
@@ -219,7 +219,7 @@ locals {
   })
 
   user_data = templatefile("${path.module}/templates/user-data.sh.tmpl", {
-    port    = var.ingress_port
+    port    = var.ingress_port_docker
     config  = local.collector_hocon
     version = local.app_version
 

@@ -28,6 +28,12 @@ variable "ingress_port" {
   type        = number
 }
 
+variable "ingress_port_docker" {
+  description = "The port that the collector will be bound to and expose over HTTP"
+  type        = number
+  default     = 8080
+}
+
 variable "instance_type" {
   description = "The instance type to use"
   type        = string
