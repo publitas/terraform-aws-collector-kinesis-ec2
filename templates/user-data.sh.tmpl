@@ -1,5 +1,62 @@
 readonly CONFIG_DIR=/opt/snowplow/config
 
+function install_nginx() {
+  sudo amazon-linux-extras install -y nginx1
+
+  echo "map \$http_referer \$referer_without_slash {
+          ~^(https?://.+?)/$ \$1;
+          default \$http_referer;
+          }
+
+    map \$http_x_forwarded_for \$ip_proxies {
+            ~(?P<ip>(,.*)) \$ip;
+          }
+
+    map \$http_x_forwarded_for \$ip_anonymized {
+        ~(?P<ip>\d+\.\d+\.\d+)\.    \$ip.0;
+        ~(?P<ip>[^:]+:[^:]+):       \$ip::;
+        default                     0.0.0.0;
+      } 
+
+
+      server{ 
+          server_name _;
+
+          location / {
+          if (\$request_method = OPTIONS) {
+              add_header 'Access-Control-Allow-Origin' \$referer_without_slash;
+              add_header 'Access-Control-Max-Age' 3600;
+              add_header 'Access-Control-Allow-Credentials' 'true';
+              add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+              add_header 'Content-Length' 0;
+              return 204;
+            }
+          proxy_pass http://127.0.0.1:8080;
+          proxy_set_header X-Forwarded-For \$ip_anonymized\$ip_proxies;
+            }
+          }" | sudo tee /etc/nginx/conf.d/proxy.conf > /dev/null
+
+  # Set the desired worker_connections value below is setting to 2048
+  sudo sed -i "s/\(worker_connections\s*\).*;/\12048;/" /etc/nginx/nginx.conf
+
+
+  sudo service nginx restart
+
+}
+
+function update_connection_limit(){
+    sudo sysctl -w net.core.somaxconn=65535
+    sudo sysctl -w net.ipv4.tcp_max_syn_backlog=65535
+
+    sudo sysctl -w net.ipv4.tcp_max_tw_buckets=1440000
+    sudo sysctl -w net.ipv4.tcp_tw_reuse=1
+    sudo sysctl -w net.ipv4.tcp_fin_timeout=30
+    }
+
+update_connection_limit
+
+install_nginx
+
 sudo mkdir -p $${CONFIG_DIR}
 sudo cat << EOF > $${CONFIG_DIR}/collector.hocon
 ${config}
