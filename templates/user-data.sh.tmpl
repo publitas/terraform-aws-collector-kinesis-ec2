@@ -39,6 +39,10 @@ function install_nginx() {
   # Set the desired worker_connections value below is setting to 2048
   sudo sed -i "s/\(worker_connections\s*\).*;/\12048;/" /etc/nginx/nginx.conf
 
+  # Turn off access logging as the amount of requests will fill up the disk instantly
+  sudo sed -i 's/access_log .*/access_log off;/' /etc/nginx/nginx.conf
+
+
 
   sudo service nginx restart
 
