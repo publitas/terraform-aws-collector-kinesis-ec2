@@ -275,7 +275,7 @@ locals {
   collector_hocon = templatefile("${path.module}/templates/config.hocon.tmpl", {
 
     sink_type            = var.sink_type
-    port                 = var.ingress_port
+    port                 = var.ingress_port_docker
     paths                = var.custom_paths
     cookie_enabled       = var.cookie_enabled
     cookie_domain        = var.cookie_domain
@@ -305,7 +305,7 @@ locals {
     accept_limited_use_license = var.accept_limited_use_license
 
     sink_type  = var.sink_type
-    port       = var.ingress_port
+    port       = var.ingress_port_docker
     config_b64 = var.config_override_b64 == "" ? base64encode(local.collector_hocon) : var.config_override_b64
     version    = local.app_version
 
