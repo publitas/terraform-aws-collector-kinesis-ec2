@@ -1,6 +1,29 @@
+variable "accept_limited_use_license" {
+  description = "Acceptance of the SLULA terms (https://docs.snowplow.io/limited-use-license-1.0/)"
+  type        = bool
+  default     = true
+
+  validation {
+    condition     = var.accept_limited_use_license
+    error_message = "Please accept the terms of the Snowplow Limited Use License Agreement to proceed."
+  }
+}
+
 variable "name" {
   description = "A name which will be pre-pended to the resources created"
   type        = string
+}
+
+variable "app_version" {
+  description = "App version to use. This variable facilitates dev flow, the modules may not work with anything other than the default value."
+  type        = string
+  default     = "3.0.1"
+}
+
+variable "config_override_b64" {
+  description = "App config uploaded as a base64 encoded blob. This variable facilitates dev flow, if config is incorrect this can break the deployment."
+  type        = string
+  default     = ""
 }
 
 variable "vpc_id" {
@@ -101,7 +124,7 @@ variable "cloudwatch_logs_retention_days" {
 
 variable "java_opts" {
   description = "Custom JAVA Options"
-  default     = "-Dorg.slf4j.simpleLogger.defaultLogLevel=info -Dcom.amazonaws.sdk.disableCbor -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=75"
+  default     = "-Dcom.amazonaws.sdk.disableCbor -XX:InitialRAMPercentage=75 -XX:MaxRAMPercentage=75"
   type        = string
 }
 
@@ -151,20 +174,55 @@ variable "scale_down_eval_minutes" {
 
 # --- Configuration options
 
+variable "sink_type" {
+  description = "The stream technology to push messages into (either 'kinesis' or 'sqs')"
+  type        = string
+  default     = "kinesis"
+
+  validation {
+    condition     = contains(["kinesis", "sqs"], var.sink_type)
+    error_message = "Valid values for 'sink_type' are 'kinesis' or 'sqs'"
+  }
+}
+
 variable "good_stream_name" {
-  description = "The name of the good kinesis stream that the collector will insert data into"
+  description = "The name of the good kinesis/sqs stream that the collector will insert data into"
   type        = string
 }
 
 variable "bad_stream_name" {
-  description = "The name of the bad kinesis stream that the collector will insert data into"
+  description = "The name of the bad kinesis/sqs stream that the collector will insert data into"
   type        = string
+}
+
+variable "enable_sqs_buffer" {
+  description = "Whether to enable the optional sqs overflow buffer for kinesis (note: only works when 'sink_type' is 'kinesis')"
+  type        = bool
+  default     = false
+}
+
+variable "good_sqs_buffer_name" {
+  description = "The name of the good sqs queue to use as an overflow buffer for kinesis"
+  type        = string
+  default     = ""
+}
+
+variable "bad_sqs_buffer_name" {
+  description = "The name of the bad sqs queue to use as an overflow buffer for kinesis"
+  type        = string
+  default     = ""
 }
 
 variable "custom_paths" {
   description = "Optional custom paths that the collector will respond to, typical paths to override are '/com.snowplowanalytics.snowplow/tp2', '/com.snowplowanalytics.iglu/v1' and '/r/tp2'. e.g. { \"/custom/path/\" : \"/com.snowplowanalytics.snowplow/tp2\"}"
   default     = {}
   type        = map(string)
+}
+
+variable "cookie_enabled" {
+  description = "Whether server side cookies are enabled or not"
+  default     = false
+  type        = bool
 }
 
 variable "cookie_domain" {
@@ -174,19 +232,19 @@ variable "cookie_domain" {
 }
 
 variable "byte_limit" {
-  description = "The amount of bytes to buffer events before pushing them to Kinesis"
+  description = "The amount of bytes to buffer events before pushing them downstream"
   default     = 1000000
   type        = number
 }
 
 variable "record_limit" {
-  description = "The number of events to buffer before pushing them to Kinesis"
+  description = "The number of events to buffer before pushing them downstream"
   default     = 500
   type        = number
 }
 
 variable "time_limit_ms" {
-  description = "The amount of time to buffer events before pushing them to Kinesis"
+  description = "The amount of time to buffer events before pushing them downstream"
   default     = 500
   type        = number
 }
