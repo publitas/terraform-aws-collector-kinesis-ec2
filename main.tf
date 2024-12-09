@@ -1,6 +1,6 @@
 locals {
   module_name    = "collector-kinesis-ec2"
-  module_version = "5.0.6"
+  module_version = "5.0.7"
 
 
   app_name    = "stream-collector"
